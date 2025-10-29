@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 # Diccionario principal de dispositivos
 dispositivos = {}
-
+#hola
 # GET: mostrar todos los dispositivos
 # POST: agregar un nuevo dispositivo
 # PUT: modificar un dispositivo existente
