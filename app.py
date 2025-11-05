@@ -1,64 +1,108 @@
-# Autor: isaak
-# Fecha: 29
+from flask import Flask, request, jsonify, render_template_string
 
-from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Diccionario principal de dispositivos
+
+# Diccionario de dispositivos
 dispositivos = {}
-#hola
-# GET: mostrar todos los dispositivos
-# POST: agregar un nuevo dispositivo
-# PUT: modificar un dispositivo existente
-@app.route('/dispositivos', methods=['GET', 'POST', 'PUT'])
-def manejar_dispositivos():
-    # Mostrar todos (GET)
-    if request.method == 'GET':
-        return jsonify(list(dispositivos.values()))
 
-    # Agregar (POST)
-    if request.method == 'POST':
-        data = request.get_json()
-        if not data or "id" not in data:
-            return jsonify({"error": "Faltan datos o el campo 'id'"}), 400
-        dispositivos[data["id"]] = data
-        return jsonify({"mensaje": "Dispositivo agregado correctamente"}), 201
 
-    # Modificar (PUT)
-    if request.method == 'PUT':
-        data = request.get_json()
-        if not data or "id" not in data:
-            return jsonify({"error": "Falta el campo 'id'"}), 400
-        id = data["id"]
-        if id not in dispositivos:
-            return jsonify({"error": "Dispositivo no encontrado"}), 404
-        dispositivos[id].update(data)
-        return jsonify({"mensaje": "Dispositivo actualizado correctamente"}), 200
+# Mostrar los dispositivos
+@app.route('/tilin', methods=['GET'])
+def mostrar_dispositivos_html():
+    html = """
+   <html>
+<head>
+    <title>Listado de Dispositivos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #222;
+            margin: 20px;
+        }
 
-# Ruta para mostrar todos los dispositivos en HTML
-@app.route('/dispositivos_html', methods=['GET'])
-def mostrar_html():
-    html = "<html><body><h1>Lista de Dispositivos</h1>"
-    for d in dispositivos.values():
-        html += f"""
-        <div style='border:1px solid #ccc; padding:10px; margin:10px;'>
-            <b>ID:</b> {d.get('id','')}<br>
-            <b>Nombre:</b> {d.get('nombre','')}<br>
-            <b>Descripción:</b> {d.get('descripcion','')}<br>
-            <b>IP:</b> {d.get('ip','')}<br>
-            <b>MAC:</b> {d.get('mac','')}<br>
-            <b>Ubicación:</b> {d.get('ubicacion','')}<br>
-            <b>Tipo:</b> {d.get('tipo','')}
-        </div>
-        """
-    html += "</body></html>"
-    return html
+        h1 {
+            text-align: center;
+            color: #2a4d9b;
+        }
 
-# Ruta base
-@app.route('/')
-def inicio():
-    return "API de dispositivos funcionando correctamente. Usa /dispositivos y /dispositivos_html"
+        .dispositivo {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px 15px;
+            margin: 10px 0;
+        }
+
+        .dispositivo h2 {
+            margin: 0;
+            color: #2a4d9b;
+            font-size: 18px;
+        }
+
+        .dispositivo p {
+            margin: 4px 0;
+            font-size: 14px;
+        }
+
+        b {
+            color: #444;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dispositivos de Red</h1>
+    {% for d in dispositivos.values() %}
+    <div class="dispositivo">
+        <h2>{{ d.nombre }}</h2>
+        <p><b>Descripción:</b> {{ d.descripcion }}</p>
+        <p><b>IP:</b> {{ d.ip }}</p>
+        <p><b>MAC:</b> {{ d.mac }}</p>
+        <p><b>Ubicación:</b> {{ d.ubicacion }}</p>
+        <p><b>Tipo:</b> {{ d.tipo }}</p>
+        <p><b>Otros:</b> {{ d.otros }}</p>
+    </div>
+    {% endfor %}
+</body>
+</html>
+    """
+    return render_template_string(html, dispositivos=dispositivos)
+
+
+# Agregar un nuevo dispositivo
+@app.route('/tilin', methods=['POST'])
+def agregar_dispositivo():
+    data = request.get_json()
+    if not data or "id" not in data:
+        return jsonify({"error": "Faltan datos o ID"}), 400
+
+
+    dispositivos[data["id"]] = data
+    return jsonify({"mensaje": "Dispositivo agregado", "dispositivo": data}), 201
+
+
+# Modificar un dispositivo existente
+@app.route('/dispositivos/<id>', methods=['PUT'])
+def modificar_dispositivo(id):
+    if id not in dispositivos:
+        return jsonify({"error": "Dispositivo no encontrado"}), 404
+
+
+    data = request.get_json()
+    for clave, valor in data.items():
+        dispositivos[id][clave] = valor
+
+
+    return jsonify({"mensaje": "Dispositivo modificado", "dispositivo": dispositivos[id]}), 200
+
+
+# Ruta de prueba
+@app.route('/', methods=['GET'])
+def test():
+    return "API funcionando correctamente"
+
 
 if __name__ == '__main__':
     app.run(debug=True)
